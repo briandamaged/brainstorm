@@ -17,8 +17,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "brainstorm"
   gem.homepage = "http://github.com/briandamaged/brainstorm"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{Creates chains of events for easy data processing}
+  gem.description = %Q{Creates chains of events for easy data processing}
   gem.email = "constructile.truth@gmail.com"
   gem.authors = ["Brian Lauber"]
   # dependencies defined in Gemfile
