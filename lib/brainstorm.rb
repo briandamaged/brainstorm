@@ -55,7 +55,26 @@ module Brainstorm
   end
 
 
+
+  class Selector < Neuron
+    attr_accessor :function
   
+    def initialize(&block)
+      @function = block
+    end
+  
+    def call(item)
+      if @function.call(item)
+        fire start
+        fire value(item)
+        fire finish
+      else
+        fire value(item)
+      end
+    end
+  end
+
+
   class Aggregator < Neuron
     def initialize
       @buffer = []
@@ -93,6 +112,7 @@ module Brainstorm
       end
     end
   end
+
 
 
 end
