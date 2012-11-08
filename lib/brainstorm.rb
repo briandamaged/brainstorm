@@ -75,6 +75,33 @@ module Brainstorm
   end
 
 
+  class Debouncer < Neuron
+    attr_accessor :quiet_period
+    attr_reader :timer, :state
+  
+    def initialize(quiet_period)
+      @quiet_period = quiet_period
+      
+      
+      @buffer = []
+
+      @timer = 0
+      @is_capturing = false
+    end
+    
+    def call(item)
+      if item.is_a? Start
+        # TODO: Improve the error handling here
+        $stderr.puts "Unexpected Start token encountered by debouncer"
+      elsif item.is_a? Finish
+      elsif item.is_a? Value
+        @buffer.push item
+      end
+
+    end
+  end
+
+
   class Aggregator < Neuron
     def initialize
       @buffer = []
