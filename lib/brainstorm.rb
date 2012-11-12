@@ -4,6 +4,9 @@ module Brainstorm
 
 
   class Start
+    def to_s
+      "[START]"
+    end
   end
   
   def start
@@ -11,6 +14,9 @@ module Brainstorm
   end
   
   class Finish
+    def to_s
+      "[FINISH]"
+    end
   end
   
   def finish
@@ -22,6 +28,10 @@ module Brainstorm
     attr_reader :value
     def initialize(value)
       @value = value
+    end
+    
+    def to_s
+      "[#{@value}]"
     end
   end
   
@@ -40,6 +50,11 @@ module Brainstorm
     
     def call(item)
       raise NotImplementedError, "Neuron is an abstact base class."
+    end
+    
+    def >>(callable)
+      self.fired.register {|i| callable.call(i) }
+      return callable
     end
     
     private
@@ -82,20 +97,44 @@ module Brainstorm
     def initialize(quiet_period)
       @quiet_period = quiet_period
       
-      
       @buffer = []
 
       @timer = 0
       @is_capturing = false
+      @in_block = false
     end
     
     def call(item)
+      puts item.class
       if item.is_a? Start
-        # TODO: Improve the error handling here
-        $stderr.puts "Unexpected Start token encountered by debouncer"
+        if @is_capturing
+          # Record the items that were in the debounce window
+          @buffer.each {|i| fire i}
+        else
+          # Start recording items
+          @is_capturing = true
+          fire start
+        end
+        @in_block = true
+        @timer = 0
       elsif item.is_a? Finish
+        @buffer   = []
+        @in_block = false
       elsif item.is_a? Value
-        @buffer.push item
+        if @is_capturing
+          if @in_block
+            # Always fire items inside of blocks
+            fire item
+          else
+            @timer += 1
+            if @timer > @quiet_period
+              fire finish
+              @is_capturing = false
+            else
+              @buffer.push item
+            end
+          end
+        end
       end
 
     end
