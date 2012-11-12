@@ -88,7 +88,7 @@ module Brainstorm
     attr_accessor :function
   
     def initialize(*args, &block)
-      @function = function_for(*args, &block)
+      @function = Brainstorm.function_for(*args, &block)
     end
   
     def call(item)
@@ -160,6 +160,8 @@ module Brainstorm
     end
 
   end
+
+
 
 
   class Aggregator < Neuron
