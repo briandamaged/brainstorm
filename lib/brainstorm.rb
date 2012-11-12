@@ -40,6 +40,19 @@ module Brainstorm
     Value.new(value)
   end
   
+  
+  
+  def self.function_for(*args, &block)
+    if block
+      return block
+    elsif args.size == 1
+      return args[0]
+    elsif args.size == 2
+      return args[0].method(args[1])
+    else
+      raise ArgumentError, "Unable to convert arguments to a callable"
+    end
+  end
 
 
 
@@ -74,8 +87,8 @@ module Brainstorm
   class Selector < Neuron
     attr_accessor :function
   
-    def initialize(&block)
-      @function = block
+    def initialize(*args, &block)
+      @function = function_for(*args, &block)
     end
   
     def call(item)
@@ -88,6 +101,11 @@ module Brainstorm
       end
     end
   end
+  
+  def select(*args, &block)
+    Selector.new(*args, &block)
+  end
+
 
 
   class Debouncer < Neuron
@@ -97,47 +115,50 @@ module Brainstorm
     def initialize(quiet_period)
       @quiet_period = quiet_period
       
-      @buffer = []
-
       @timer = 0
-      @is_capturing = false
-      @in_block = false
+      @state = :asleep
     end
     
+    def is_asleep?
+      @state == :asleep
+    end
+    
+    def is_buffering?
+      @state == :buffering
+    end
+
+
     def call(item)
-      puts item.class
       if item.is_a? Start
-        if @is_capturing
-          # Record the items that were in the debounce window
-          @buffer.each {|i| fire i}
-        else
-          # Start recording items
-          @is_capturing = true
+        if is_asleep?
           fire start
+        elsif is_buffering?
+          @buffer.each {|i| fire i}
         end
-        @in_block = true
-        @timer = 0
+
+        @state = :in_block
       elsif item.is_a? Finish
-        @buffer   = []
-        @in_block = false
-      elsif item.is_a? Value
-        if @is_capturing
-          if @in_block
-            # Always fire items inside of blocks
-            fire item
-          else
-            @timer += 1
-            if @timer > @quiet_period
-              fire finish
-              @is_capturing = false
-            else
-              @buffer.push item
-            end
+        @buffer = []
+        @timer  = 0
+        
+        @state = :buffering
+      else
+        if is_buffering?
+          @buffer.push item
+          
+          @timer += 1
+          if @timer > @quiet_period
+            fire finish
+            @buffer.each {|i| fire i}
+            
+            @state = :asleep
           end
+        else
+          fire item
         end
       end
-
     end
+
   end
 
 
